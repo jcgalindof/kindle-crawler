@@ -111,7 +111,7 @@ $qs = function(int $p) use($q,$topic,$sort) {
 <section class="hero"><div class="wrap">
   <p class="eyebrow">LECTURAS · MÉXICO</p>
   <h1>Catálogo Kindle+ México</h1>
-  <p class="lead">Busca entre <strong><?=number_format($totalCatalog,0,'.',',')?> libros</strong> detectados en el catálogo mexicano. Sin navegar por cientos de páginas de Amazon.</p>
+  <p class="lead">Busca entre <strong><?=number_format($totalCatalog,0,'.',',')?> libros</strong> (y contando... cada día agregamos más) detectados en el catálogo mexicano. Sin navegar por cientos de páginas de Amazon.</p>
   <form action="" method="get" class="search-panel" role="search">
     <label for="q">Buscar por título o autor</label>
     <div class="search-row"><input id="q" name="q" type="search" placeholder="Ej. Watchmen, Alan Moore, cosmología..." value="<?=e($q)?>" maxlength="100"><button type="submit">Buscar</button></div>

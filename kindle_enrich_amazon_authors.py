@@ -26,7 +26,7 @@ import kindle_crawler_category_match as catalog
 
 STATE_FILE = catalog.DATA / "kindle_plus_mexico_2.0_author_progress.json"
 REPORT_FILE = catalog.DATA / "kindle_plus_mexico_2.0_author_report.json"
-DEFAULT_DELAY = 3.0
+DEFAULT_DELAY = 5.0
 
 
 def sha256(path):
@@ -70,46 +70,34 @@ def product_url(asin):
 
 def extract_product_metadata(page):
     return page.evaluate(
-        """() => {
-            const clean = value => value?.replace(/\\s+/g, ' ').trim() || null;
-            const names = [];
+        r"""() => {
+            const clean = value => value?.replace(/\s+/g, ' ').trim() || null;
+            const authors = new Set();
+            const unlabeled = new Set();
             const containers = document.querySelectorAll(
-                '#bylineInfo .author, #bylineInfo_feature_div .author, span.author'
+                '#bylineInfo .author, #bylineInfo_feature_div .author'
             );
 
             for (const container of containers) {
-                const role = clean(container.innerText) || '';
-                if (/traductor|translator|ilustrador|illustrator|narrador|narrator/i.test(role)) {
-                    continue;
-                }
-                if (/\\([^)]*(?:autor|author)[^)]*\\)/i.test(role) ||
-                    !/\\([^)]*\\)/.test(role)) {
-                    const link = container.querySelector(
-                        'a.contributorNameID, a.a-link-normal, a[href]'
-                    );
-                    const name = clean(link?.innerText);
-                    if (name && !names.includes(name)) names.push(name);
-                }
-            }
-
-            if (!names.length) {
-                for (const link of document.querySelectorAll(
-                    '#bylineInfo a.contributorNameID, #bylineInfo_feature_div a.contributorNameID'
-                )) {
-                    const parent = link.closest('.author');
-                    const role = clean(parent?.innerText) || '';
-                    if (/traductor|translator|ilustrador|illustrator|narrador|narrator/i.test(role)) {
-                        continue;
-                    }
-                    const name = clean(link.innerText);
-                    if (name && !names.includes(name)) names.push(name);
+                const link = container.querySelector('a.contributorNameID, a[href]');
+                const name = clean(link?.innerText);
+                if (!name) continue;
+                const role = (clean(container.innerText) || '').replace(name, '');
+                if (/\(\s*(?:autor(?:a|es)?|coautor(?:a|es)?|authors?|co-authors?)\b/i.test(role)) {
+                    authors.add(name);
+                } else if (!/\([^)]*\)/.test(role)) {
+                    unlabeled.add(name);
                 }
             }
 
             const title = clean(
                 document.querySelector('#productTitle, #ebooksProductTitle')?.innerText
             );
-            return {title, author: names.length ? names.join(', ') : null};
+            return {
+                title,
+                author: [...authors].join(', ') || null,
+                author_candidate: [...unlabeled].join(', ') || null,
+            };
         }"""
     )
 
@@ -120,6 +108,8 @@ def fetch_author(page, asin):
     )
     catalog.response_guard(response, page)
     product = urlparse(page.url)
+    if product.hostname == "www.amazon.com.mx" and "/ap/signin" in product.path:
+        raise RuntimeError("Amazon pidió iniciar sesión. Verifica el perfil y reanuda el lote.")
     product_asin = re.search(
         r"/(?:dp|gp/product|gp/aw/d)/([A-Z0-9]{10})(?:/|$)", product.path, re.IGNORECASE
     )
@@ -297,7 +287,7 @@ def run(args):
                     save_progress(state, books, "running")
 
                 if index + 1 < end:
-                    pause = args.delay + random.uniform(0, 1.5)
+                    pause = args.delay + random.uniform(0, 2)
                     time.sleep(pause)
 
             status = "completed" if end == len(pending) else "limited"
@@ -316,6 +306,7 @@ def run(args):
             if state is not None:
                 catalog.save_catalog(books)
                 save_progress(state, books, "interrupted")
+            raise SystemExit(130)
         except Exception:
             if state is not None:
                 catalog.save_catalog(books)
@@ -337,7 +328,10 @@ def parse_args():
         default=0,
         help="máximo de fichas en esta sesión; 0 procesa todas",
     )
-    parser.add_argument("--delay", type=float, default=DEFAULT_DELAY)
+    parser.add_argument(
+        "--delay", type=float, default=DEFAULT_DELAY,
+        help="pausa base en segundos entre fichas, más 0–2 s aleatorios (predeterminado: %(default)s)",
+    )
     parser.add_argument("--checkpoint-every", type=int, default=10)
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--no-prompt", action="store_true")

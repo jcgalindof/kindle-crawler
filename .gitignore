@@ -1,0 +1,30 @@
+# Perfiles del navegador y estado local de Amazon
+/amazon_profile*/
+/backups/
+
+# Catálogos, informes y checkpoints generados
+/data/*
+!/data/amazon_main_categories.json
+/website/data/
+
+# Copia anterior del sitio
+/website/catalogo-kindle-plus/
+
+# Entorno local de Python y archivos del editor
+/.venv/
+/.vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+*.log
+*.tmp
+
+# Credenciales locales
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx

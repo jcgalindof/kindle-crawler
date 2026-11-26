@@ -1,0 +1,137 @@
+[
+  {
+    "id": 2,
+    "name": "Tienda Kindle",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 3,
+    "name": "Arte y Fotografía",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9257649011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 4,
+    "name": "Artesanía, Hobbies y Hogar",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9257875011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 5,
+    "name": "Autoayuda",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9258074011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 6,
+    "name": "Biografías y Memorias",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9258085011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 7,
+    "name": "Ciencia Ficción y Fantasía",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9258130011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 8,
+    "name": "Ciencia y Matemáticas",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9323944011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 9,
+    "name": "Cómics y Novelas Gráficas",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9324159011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 10,
+    "name": "Computadoras y Tecnología",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9324190011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 11,
+    "name": "Deportes y Tiempo Libre",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9324259011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 12,
+    "name": "Educación y Referencia",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9325012011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 13,
+    "name": "Erótica",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9325233011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 14,
+    "name": "Historia",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9325243011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 15,
+    "name": "Humor y Entretenimiento",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9325375011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 16,
+    "name": "Infantil y juvenil",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9326106011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 17,
+    "name": "Libros de Recetas, Comida y Vino",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9327469011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 18,
+    "name": "Literatura y Ficción",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9327606011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 19,
+    "name": "Misterio, Thriller y Suspenso",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9327748011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 20,
+    "name": "Negocios e Inversiones",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9327773011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 21,
+    "name": "Paternidad y Relaciones",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9327961011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 22,
+    "name": "Política y Ciencias Sociales",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9327998011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 23,
+    "name": "Profesional y Técnico",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9329226011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 24,
+    "name": "Religión y Espiritualidad",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9329787011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 25,
+    "name": "Romance",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9330103011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 26,
+    "name": "Salud, Fitness y Dieta",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9330133011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 27,
+    "name": "Viajes",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9330268011&srs=9257648011&fs=true"
+  },
+  {
+    "id": 28,
+    "name": "eBooks en Idiomas Extranjeros",
+    "url": "https://www.amazon.com.mx/s?i=kindle-unlimited&rh=n%3A6446439011%2Cn%3A9257648011%2Cn%3A9324355011&srs=9257648011&fs=true"
+  }
+]

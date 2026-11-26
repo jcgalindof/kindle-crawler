@@ -155,5 +155,5 @@ $qs = function(int $p) use($q,$topic,$sort) {
 </main>
 <footer><div class="wrap"><span>© <?=date('Y')?> Cristóbal Galindo</span><span>Hecho para encontrar mejores lecturas, no para reemplazar Amazon.</span></div></footer>
 </body>
-  <!-- Silence is sexy --> 
+  <!-- Silence is sexy... --> 
 </html>

@@ -107,3 +107,40 @@
   .detail-layout { grid-template-columns: minmax(0, 1fr); }
   .detail-cover { max-width: 155px; }
 }
+
+.about-link {
+  font-size: .87rem;
+  font-weight: 750;
+}
+.author-about {
+  display: grid;
+  grid-template-columns: minmax(120px, 168px) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(20px, 5vw, 44px);
+  scroll-margin-top: 24px;
+}
+.author-portrait {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  background: var(--light);
+}
+.author-about p { margin: 0 0 12px; }
+.author-profiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 700;
+}
+.author-profiles a {
+  display: inline-block;
+  padding-block: 5px;
+}
+@media (max-width: 520px) {
+  .author-about { grid-template-columns: minmax(0, 1fr); }
+  .author-portrait { max-width: 136px; }
+}

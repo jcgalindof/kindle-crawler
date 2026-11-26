@@ -17,7 +17,10 @@ $author = $book !== null ? bookAuthor($book) : '';
 $image = $book !== null ? bookImage($book) : null;
 $hardcover = null;
 if ($book !== null) {
-    require_once __DIR__ . '/hardcover.php';
+    require_once __DIR__ . '/book-pages.php';
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+        registerBookPage($book['asin']);
+    }
     $hardcover = hardcoverForBook($book);
 }
 $number = static function (int $value): string {
@@ -79,6 +82,9 @@ $number = static function (int $value): string {
               <p>Esta obra todavía no tiene calificaciones en Hardcover.</p>
             <?php endif; ?>
             <p><?=$number($hardcover['reviews_count'])?> <?=$hardcover['reviews_count'] === 1 ? 'reseña' : 'reseñas'?> de la obra en Hardcover.</p>
+            <?php if (($hardcover['match_method'] ?? '') === 'title'): ?>
+              <p class="meta">Coincidencia por título de la obra.</p>
+            <?php endif; ?>
             <a href="https://hardcover.app/books/<?=rawurlencode($hardcover['slug'])?>" target="_blank" rel="noopener noreferrer">Ver la obra y sus reseñas en Hardcover <span aria-hidden="true">↗</span></a>
           <?php else: ?>
             <p>Por ahora no hay datos de Hardcover disponibles para esta edición.</p>

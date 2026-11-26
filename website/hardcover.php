@@ -4,13 +4,35 @@ declare(strict_types=1);
 const HARDCOVER_FIELDS = 'id slug title rating ratings_count reviews_count';
 const HARDCOVER_SUCCESS_TTL = 14 * 86400;
 const HARDCOVER_MISS_TTL = 7 * 86400;
+const HARDCOVER_LOOKUP_VERSION = 2;
 
 function hardcoverStatePath(): string {
     return getenv('KINDLE_HARDCOVER_STATE_DIR') ?: dirname(__DIR__, 2) . '/.kindle-plus';
 }
 
 function hardcoverTitle(string $title): string {
-    return trim(preg_replace('/\s*[\[(][^)\]]*(?:edici[oó]n|\bed\.?|edition)[^)\]]*[\])]\s*$/iu', '', $title) ?? $title);
+    $qualifier = '/\s*[\[(][^()\[\]]*(?:\b(?:edici[oó]n|ed|edition|readers club)\b|'
+        . '\b(?:book|tomo|vol\.?)\s+\d+|n[º°]\s*\d+)[^()\[\]]*[\])]\s*$/iu';
+    do {
+        $original = $title;
+        $title = trim(preg_replace($qualifier, '', $title) ?? $title);
+    } while ($title !== $original);
+    return $title;
+}
+
+function hardcoverMainTitle(string $title): string {
+    return trim(preg_split('/:\s+/u', $title, 2)[0]);
+}
+
+function hardcoverVolume(string $title): ?int {
+    $pattern = '/(?:\b(?:vol(?:umen|ume)?\.?|book|tomo|n[º°]\.?|no\.|núm\.?)|#)\s*(\d+)\b/iu';
+    return preg_match($pattern, $title, $match) ? (int)$match[1] : null;
+}
+
+function hardcoverNumberedEdition(string $title): string {
+    $title = preg_replace('/\s*\((?:english|spanish|french|german|italian|portuguese)\s+edition\)\s*$/iu', '', $title) ?? $title;
+    $title = normalizedSearch($title);
+    return preg_match('/\b(?:19|20)\d{2} (?:edition|edicion)\b/', $title) ? $title : '';
 }
 
 function hardcoverRequest(PDO $db, string $token, string $query, array $variables): array {
@@ -67,34 +89,88 @@ function hardcoverStats(array $item): ?array {
     ];
 }
 
-function hardcoverMatch(array $documents, string $title, string $credit): ?array {
-    $titleKey = normalizedSearch($title);
+function hardcoverMatch(array $documents, string $rawTitle, string $credit, bool $completeResults): ?array {
+    $title = hardcoverTitle($rawTitle);
+    $exactKey = normalizedSearch($title);
+    $baseKey = normalizedSearch(hardcoverMainTitle($title));
+    $editionKey = hardcoverNumberedEdition($rawTitle);
+    $volume = hardcoverVolume($rawTitle);
     $authors = array_map('normalizedSearch', explode(',', $credit));
+    $distinctTitle = $completeResults && strlen($exactKey) >= 18 && substr_count($exactKey, ' ') >= 3;
     $matches = [];
+    $best = 0;
     foreach ($documents as $item) {
-        $titles = array_merge([$item['title'] ?? ''], (array)($item['alternative_titles'] ?? []));
-        $matchTitle = false;
-        foreach ($titles as $alternative) {
-            $matchTitle = $matchTitle || (is_string($alternative)
-                && $titleKey === normalizedSearch(hardcoverTitle($alternative)));
-        }
-        if (!$matchTitle) {
+        if (!is_array($item)) {
             continue;
         }
-        foreach ($item['contributions'] ?? [] as $contributor) {
-            $role = normalizedSearch((string)($contributor['contributor_role_name'] ?? $contributor['contribution'] ?? ''));
-            $name = normalizedSearch((string)($contributor['author']['name'] ?? ''));
-            if (in_array($role, ['author', 'co author', 'coauthor'], true)
-                && $name !== '' && in_array($name, $authors, true)) {
-                $stats = hardcoverStats($item);
-                if ($stats !== null) {
-                    $matches[$stats['id']] = $stats;
-                }
-                break;
+        if ($volume !== null) {
+            $position = hardcoverVolume((string)($item['title'] ?? '')) ?? ($item['featured_series_position'] ?? null);
+            if (!is_numeric($position) || (float)$position !== (float)$volume) {
+                continue;
             }
         }
+        if ($credit !== '') {
+            $hasAuthor = false;
+            foreach ($item['contributions'] ?? [] as $contributor) {
+                $role = normalizedSearch((string)($contributor['contributor_role_name'] ?? $contributor['contribution'] ?? ''));
+                $name = normalizedSearch((string)($contributor['author']['name'] ?? ''));
+                if ($name !== '' && in_array($name, $authors, true)
+                    && in_array($role, ['author', 'co author', 'coauthor'], true)) {
+                    $hasAuthor = true;
+                    break;
+                }
+            }
+            if (!$hasAuthor) {
+                continue;
+            }
+        }
+        $titles = array_merge([$item['title'] ?? ''], (array)($item['alternative_titles'] ?? []));
+        $score = 0;
+        foreach ($titles as $alternative) {
+            if (!is_string($alternative)) {
+                continue;
+            }
+            if ($editionKey !== '' && hardcoverNumberedEdition($alternative) === $editionKey) {
+                $score = 3;
+                break;
+            }
+            $candidate = hardcoverTitle($alternative);
+            $candidateKey = normalizedSearch($candidate);
+            if ($candidateKey === $exactKey && ($credit !== '' || $distinctTitle)) {
+                $score = max(2, $score);
+            } elseif ($credit !== '' && ($volume !== null || strlen($baseKey) >= 8)) {
+                $candidateBase = normalizedSearch(hardcoverMainTitle($candidate));
+                if ($baseKey === $candidateBase && ($exactKey === $baseKey || $candidateKey === $candidateBase)) {
+                    $score = max(1, $score);
+                }
+            }
+        }
+        if ($score === 0 || $score < $best || ($stats = hardcoverStats($item)) === null) {
+            continue;
+        }
+        if ($score > $best) {
+            $matches = [];
+            $best = $score;
+        }
+        $stats['match_method'] = $credit === '' ? 'title' : 'title_author';
+        $matches[$stats['id']] = $stats;
     }
     return count($matches) === 1 ? reset($matches) : null;
+}
+
+function hardcoverSearch(PDO $db, string $token, array $book, string $author): ?array {
+    $title = hardcoverMainTitle(hardcoverTitle($book['title']));
+    if (strlen(normalizedSearch($title)) < 3) {
+        return null;
+    }
+    $query = 'query($term:String!) { search(query:$term,query_type:"Book",per_page:8){error results} }';
+    $data = hardcoverRequest($db, $token, $query, ['term' => trim($title . ' ' . explode(',', $author, 2)[0])]);
+    $result = $data['search']['results'] ?? [];
+    if (!empty($data['search']['error']) || !is_array($result['hits'] ?? null) || !empty($result['search_cutoff'])) {
+        throw new RuntimeException('Búsqueda de Hardcover incompleta');
+    }
+    $complete = is_numeric($result['found'] ?? null) && (int)$result['found'] <= count($result['hits']);
+    return hardcoverMatch(array_column($result['hits'], 'document'), $book['title'], $author, $complete);
 }
 
 function hardcoverLookup(PDO $db, string $token, array $book, ?array $cached): ?array {
@@ -102,20 +178,12 @@ function hardcoverLookup(PDO $db, string $token, array $book, ?array $cached): ?
         $query = 'query($id:Int!) { books(where:{id:{_eq:$id}},limit:1){' . HARDCOVER_FIELDS . '} }';
         $data = hardcoverRequest($db, $token, $query, ['id' => $cached['id']]);
         $stats = hardcoverStats($data['books'][0] ?? []);
-        return $stats ?? $cached;
+        return $stats === null ? $cached : array_merge($stats, ['match_method' => $cached['match_method'] ?? 'asin']);
     }
 
     $author = bookAuthor($book);
-    $title = hardcoverTitle($book['title']);
-    if (normalizedSearch($title) !== '' && $author !== '') {
-        $query = 'query($term:String!) { search(query:$term,query_type:"Book",per_page:8){error results} }';
-        $data = hardcoverRequest($db, $token, $query, ['term' => $title . ' ' . explode(',', $author, 2)[0]]);
-        if (!empty($data['search']['error']) || !is_array($data['search']['results']['hits'] ?? null)
-            || !empty($data['search']['results']['search_cutoff'])) {
-            throw new RuntimeException('Búsqueda de Hardcover incompleta');
-        }
-        $documents = array_column($data['search']['results']['hits'], 'document');
-        $stats = hardcoverMatch($documents, $title, $author);
+    if ($author !== '') {
+        $stats = hardcoverSearch($db, $token, $book, $author);
         if ($stats !== null) {
             return $stats;
         }
@@ -130,12 +198,16 @@ function hardcoverLookup(PDO $db, string $token, array $book, ?array $cached): ?
             $matches[$stats['id']] = $stats;
         }
     }
-    return count($matches) === 1 ? reset($matches) : null;
+    if (count($matches) === 1) {
+        return array_merge(reset($matches), ['match_method' => 'asin']);
+    }
+    return $author === '' ? hardcoverSearch($db, $token, $book, '') : null;
 }
 
-function hardcoverCached(PDO $db, string $asin, string $signature): array {
-    $select = $db->prepare('SELECT payload, saved_at FROM book_matches WHERE asin = ? AND signature = ?');
-    $select->execute([$asin, $signature]);
+function hardcoverCached(PDO $db, string $asin, string $signature, string $missSignature): array {
+    $select = $db->prepare('SELECT payload, saved_at FROM book_matches WHERE asin = ? AND
+        ((payload IS NOT NULL AND signature = ?) OR (payload IS NULL AND signature = ?))');
+    $select->execute([$asin, $signature, $missSignature]);
     $row = $select->fetch(PDO::FETCH_ASSOC);
     if (!$row) {
         return [null, false];
@@ -165,7 +237,8 @@ function hardcoverForBook(array $book): ?array {
             CREATE TABLE IF NOT EXISTS api_backoff (id INTEGER PRIMARY KEY, until_time INTEGER NOT NULL)');
         $asin = $book['asin'];
         $signature = hash('sha256', $book['title'] . "\n" . bookAuthor($book));
-        [$cached, $fresh] = hardcoverCached($db, $asin, $signature);
+        $missSignature = hash('sha256', $signature . ':' . HARDCOVER_LOOKUP_VERSION);
+        [$cached, $fresh] = hardcoverCached($db, $asin, $signature, $missSignature);
         if ($fresh) {
             return $cached;
         }
@@ -174,14 +247,14 @@ function hardcoverForBook(array $book): ?array {
         if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
             return $cached;
         }
-        [$cached, $fresh] = hardcoverCached($db, $asin, $signature);
+        [$cached, $fresh] = hardcoverCached($db, $asin, $signature, $missSignature);
         if ($fresh) {
             return $cached;
         }
         $stats = hardcoverLookup($db, $token, $book, $cached);
         $save = $db->prepare('INSERT OR REPLACE INTO book_matches (asin, signature, payload, saved_at) VALUES (?, ?, ?, ?)');
         $payload = $stats === null ? null : json_encode($stats, JSON_THROW_ON_ERROR);
-        $save->execute([$asin, $signature, $payload, time()]);
+        $save->execute([$asin, $stats === null ? $missSignature : $signature, $payload, time()]);
         return $stats;
     } catch (RuntimeException | JsonException $exception) {
         return $cached;

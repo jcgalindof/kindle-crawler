@@ -129,12 +129,12 @@ $qs = static function (int $p) use ($q, $topic, $sort): string {
 <!-- Opcional: color de interfaz en navegadores móviles -->
 <meta name="theme-color" content="#0b1530">
 
-<link rel="stylesheet" href="<?=e(sitePath('assets/style.css?v=4'))?>">
+<link rel="stylesheet" href="<?=e(sitePath('assets/style.css?v=5'))?>">
 <script type="application/ld+json"><?=json_encode(['@context'=>'https://schema.org','@type'=>'CollectionPage','name'=>$heading,'url'=>$canonical,'inLanguage'=>'es-MX','dateModified'=>CATALOG_UPDATED_ISO,'description'=>$description,'isPartOf'=>['@type'=>'WebSite','name'=>'Cristóbal Galindo','url'=>'https://cristobalgalindo.com/']], JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_TAG)?></script>
 </head>
 <body>
 <a href="#resultados" class="skip">Ir a resultados</a>
-<header class="topbar"><div class="wrap"><a class="brand" href="https://cristobalgalindo.com/">cristobalgalindo.com</a><span class="topnote">Explorador independiente</span></div></header>
+<header class="topbar"><div class="wrap"><a class="brand" href="https://cristobalgalindo.com/">cristobalgalindo.com</a><a class="about-link" href="#acerca-de">Acerca de</a></div></header>
 <main>
 <section class="hero"><div class="wrap">
   <p class="eyebrow">LECTURAS · MÉXICO</p>
@@ -173,6 +173,18 @@ $qs = static function (int $p) use ($q, $topic, $sort): string {
   <?php endif; ?>
 </section>
 <section class="wrap about"><h2>¿Qué es este catálogo?</h2><p>Es un proyecto independiente para facilitar la exploración de libros detectados en la búsqueda de Kindle+ en Amazon México. La recopilación procede de resultados visibles del <?=e(CATALOG_DATE)?>, no de una descarga oficial del catálogo completo.</p><p>Una etiqueta Kindle+ en un resultado de búsqueda <strong>no garantiza</strong> que un libro continúe incluido, que esté disponible para tu cuenta o que se pueda tomar en préstamo. Comprueba la ficha del libro antes de decidir. Las calificaciones de Amazon corresponden al momento de captura.</p><p>Se muestran los autores verificados en Amazon. Los temas se sugieren a partir de los títulos. Este sitio no está afiliado ni avalado por Amazon.</p><p>Kindle, Kindle+ y Amazon son marcas de sus respectivos titulares. Los enlaces a Amazon México no contienen identificadores de afiliado.</p></section>
+<section class="wrap about author-about" id="acerca-de" aria-labelledby="author-about-heading">
+  <img class="author-portrait" src="<?=e(sitePath('assets/cristobal-galindo.webp'))?>" alt="Cristóbal Galindo" width="886" height="886" loading="lazy" decoding="async">
+  <div>
+    <h2 id="author-about-heading">Acerca de Cristóbal Galindo</h2>
+    <p>Soy especialista en Salesforce Marketing Cloud. Entre mis lecturas hay filosofía, cómics y lo que se atraviese.</p>
+    <p>Hago este catálogo con ayuda de <strong>Lykaia</strong>, mi instancia de ChatGPT Work, para encontrar qué leer en Kindle+ México.</p>
+    <ul class="author-profiles" aria-label="Mis perfiles de lectura">
+      <li><a href="https://www.goodreads.com/jcgalindof">Goodreads</a></li>
+      <li><a href="https://hardcover.app/@jcgalindof">Hardcover</a></li>
+    </ul>
+  </div>
+</section>
 </main>
 <footer><div class="wrap"><span>© <?=date('Y')?> Cristóbal Galindo</span><span>Hecho para encontrar mejores lecturas, no para reemplazar Amazon.</span></div></footer>
 </body>

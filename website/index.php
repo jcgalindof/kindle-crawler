@@ -11,10 +11,19 @@ if (!in_array($sort, ['catalogo','titulo','calificacion'], true)) $sort='catalog
 $catalog = @fopen(__DIR__ . '/data/books.json', 'rb');
 $totalCatalog = 0;
 $needle = foldText($q);
+$authorFor = static function (array $book): string {
+    return ($book['author_verified'] ?? false) === true && is_string($book['author'] ?? null)
+        ? trim($book['author'])
+        : '';
+};
 $matches = [];
 foreach (streamBooks($catalog) as $position => $book) {
     $totalCatalog++;
-    if ($needle !== '' && strpos(foldText((string)$book['title']), $needle) === false) continue;
+    if (
+        $needle !== ''
+        && strpos(foldText((string)$book['title']), $needle) === false
+        && strpos(foldText($authorFor($book)), $needle) === false
+    ) continue;
     if ($topic !== '' && !matchesTopic((string)$book['title'], $topic)) continue;
 
     if ($sort === 'titulo') {
@@ -65,7 +74,7 @@ $qs = function(int $p) use($q,$topic,$sort) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catálogo Kindle+ México: busca entre <?=number_format($totalCatalog, 0, '.', ',')?> libros | Cristóbal Galindo</title>
-<meta name="description" content="Explora <?=number_format($totalCatalog,0,'.',',')?> títulos encontrados en Kindle+ México. Busca libros por título, filtra temas aproximados y consulta su disponibilidad actual en Amazon.">
+<meta name="description" content="Explora <?=number_format($totalCatalog,0,'.',',')?> títulos encontrados en Kindle+ México. Busca por título o autor, filtra temas aproximados y consulta su disponibilidad actual en Amazon.">
 <meta name="robots" content="<?= $filteredMode ? 'noindex,follow' : 'index,follow' ?>">
 <link rel="canonical" href="<?= e(SITE_BASE) ?>">
 
@@ -104,12 +113,12 @@ $qs = function(int $p) use($q,$topic,$sort) {
   <h1>Catálogo Kindle+ México</h1>
   <p class="lead">Busca entre <strong><?=number_format($totalCatalog,0,'.',',')?> libros</strong> detectados en el catálogo mexicano. Sin navegar por cientos de páginas de Amazon.</p>
   <form action="" method="get" class="search-panel" role="search">
-    <label for="q">Buscar por título</label>
-    <div class="search-row"><input id="q" name="q" type="search" placeholder="Ej. Feynman, cosmología, Higgs..." value="<?=e($q)?>" maxlength="100"><button type="submit">Buscar</button></div>
+    <label for="q">Buscar por título o autor</label>
+    <div class="search-row"><input id="q" name="q" type="search" placeholder="Ej. Watchmen, Alan Moore, cosmología..." value="<?=e($q)?>" maxlength="100"><button type="submit">Buscar</button></div>
     <div class="filters"><div><label for="tema">Tema sugerido</label><select name="tema" id="tema"><option value="">Todos los títulos</option><?php foreach(topics() as $key=>$meta): ?><option value="<?=e($key)?>" <?=$topic===$key?'selected':''?>><?=e($meta[0])?></option><?php endforeach; ?></select></div>
     <div><label for="orden">Ordenar</label><select name="orden" id="orden"><option value="catalogo" <?=$sort==='catalogo'?'selected':''?>>Orden de captura</option><option value="titulo" <?=$sort==='titulo'?'selected':''?>>Título A–Z</option><option value="calificacion" <?=$sort==='calificacion'?'selected':''?>>Calificación orientativa</option></select></div></div>
   </form>
-  <p class="hero-note">Datos capturados del <?=e(CATALOG_DATE)?>. La disponibilidad puede cambiar. Los temas se infieren de los títulos, no son categorías oficiales.</p>
+  <p class="hero-note">Datos capturados del <?=e(CATALOG_DATE)?>. La disponibilidad puede cambiar. La búsqueda por autor cubre las fichas con un autor verificado.</p>
 </div></section>
 <section id="resultados" class="wrap results">
   <div class="section-head"><div><h2>Explorar libros</h2><p><?=number_format($total,0,'.',',')?> resultado<?= $total===1?'':'s'?><?= $q!=='' ? ' para «'.e($q).'»':'' ?></p></div><?php if ($filteredMode): ?><a class="reset" href="./">Limpiar filtros</a><?php endif;?></div>
@@ -130,7 +139,9 @@ $qs = function(int $p) use($q,$topic,$sort) {
           <img src="<?=e($imageUrl)?>" alt="<?=e((string)($book['image_alt'] ?? 'Portada de ' . $book['title']))?>" loading="lazy" decoding="async" onerror="this.style.display='none'">
         <?php endif; ?>
       </div>
-      <div class="book-text"><h3><?=e($book['title'])?></h3><p class="meta">ASIN <?=e($book['asin'])?></p>
+      <div class="book-text"><h3><?=e($book['title'])?></h3>
+      <?php $author = $authorFor($book); if ($author !== ''): ?><p class="meta"><?=e($author)?></p><?php endif; ?>
+      <p class="meta">ASIN <?=e($book['asin'])?></p>
       <?php if ($book['rating'] !== null): ?><p class="rating"><span aria-label="Calificación">★</span> <?=e(number_format((float)$book['rating'],1))?> / 5<?php if($book['reviews'] !== null): ?><small> · <?=number_format((int)$book['reviews'],0,'.',',')?> reseñas</small><?php endif;?></p><?php endif; ?>
       <p class="status <?=$book['eligible']?'found':'unknown'?>"><?=$book['eligible']?'Etiqueta Kindle+ detectada':'Elegibilidad no comprobada'?></p>
       <a class="book-link" href="https://www.amazon.com.mx/dp/<?=rawurlencode($book['asin'])?>" target="_blank" rel="noopener noreferrer nofollow">Consultar en Amazon <span aria-hidden="true">↗</span></a></div>
@@ -143,4 +154,6 @@ $qs = function(int $p) use($q,$topic,$sort) {
 <section class="wrap about"><h2>¿Qué es este catálogo?</h2><p>Es un proyecto independiente para facilitar la exploración de libros detectados en la búsqueda de Kindle+ en Amazon México. La recopilación procede de resultados visibles del <?=e(CATALOG_DATE)?>, no de una descarga oficial del catálogo completo.</p><p>Una etiqueta Kindle+ en un resultado de búsqueda <strong>no garantiza</strong> que un libro continúe incluido, que esté disponible para tu cuenta o que se pueda tomar en préstamo. Comprueba la ficha del libro antes de decidir. Las calificaciones y reseñas también son datos históricos del momento de captura.</p><p>El campo de autores de la captura original no era confiable y se omitió. Los temas son coincidencias automáticas de palabras en los títulos: pueden incluir falsos positivos y dejar fuera libros relevantes. Ninguna clasificación implica valoración científica o editorial. Este sitio no está afiliado ni avalado por Amazon.</p><p>Kindle, Kindle+ y Amazon son marcas de sus respectivos titulares. Los enlaces dirigen a fichas de Amazon México y no contienen identificadores de afiliado.</p></section>
 </main>
 <footer><div class="wrap"><span>© <?=date('Y')?> Cristóbal Galindo</span><span>Hecho para encontrar mejores lecturas, no para reemplazar Amazon.</span></div></footer>
-</body></html>
+</body>
+  <!-- Silence is sexy --> 
+</html>

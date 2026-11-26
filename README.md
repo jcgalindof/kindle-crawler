@@ -99,3 +99,5 @@ primero el catálogo 2.0 y usa el catálogo legado sólo si 2.0 todavía no exis
 
 Si Amazon muestra CAPTCHA o bloqueo, el crawler se detiene y conserva el último
 checkpoint; no intenta evadirlo.
+
+Enjoy

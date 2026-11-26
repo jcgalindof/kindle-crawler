@@ -41,6 +41,12 @@ function streamBooks($catalog): Generator {
     }
 }
 function foldText(string $value): string {
+    // Normaliza acentos del español antes de usar iconv, cuyo resultado varía por sistema.
+    $value = strtr($value, [
+        'á'=>'a', 'é'=>'e', 'í'=>'i', 'ó'=>'o', 'ú'=>'u', 'ü'=>'u', 'ñ'=>'n',
+        'Á'=>'A', 'É'=>'E', 'Í'=>'I', 'Ó'=>'O', 'Ú'=>'U', 'Ü'=>'U', 'Ñ'=>'N',
+    ]);
+    $value = preg_replace('/\p{Mn}+/u', '', $value) ?? $value;
     $without = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
     return strtolower($without !== false ? $without : $value);
 }

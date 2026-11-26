@@ -110,7 +110,11 @@ for row in load():
     alt=row.get('image_alt')
     if isinstance(alt,str) and alt.strip(): obj['image_alt']=alt.strip()
     author=valid_author(row.get('author'))
-    if author: obj['author']=author
+    author_source=row.get('author_source')
+    if author and author_source in ('amazon_search_card', 'amazon_product_page'):
+        obj['author']=author
+        obj['author_source']=author_source
+        obj['author_verified']=True
     cats=categories(row.get('amazon_categories',row.get('categories')))
     if cats: obj['categories']=cats
     books[asin]=obj
@@ -130,4 +134,4 @@ with tmp.open('w',encoding='utf-8') as f:
 os.replace(tmp,DEST)
 print(f'Exportados {len(books):,} libros a {DEST}')
 print(f'Con imagen: {sum(bool(b.get("image_url")) for b in books.values()):,}')
-print(f'Con autor válido: {sum(bool(b.get("author")) for b in books.values()):,}')
+print(f'Con autor verificado: {sum(bool(b.get("author_verified")) for b in books.values()):,}')

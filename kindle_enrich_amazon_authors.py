@@ -2,8 +2,8 @@
 """Enriquece autores desde las fichas de Amazon, con checkpoint reanudable.
 
 Las tarjetas actuales de búsqueda de Amazon México no siempre publican el
-autor. Este segundo paso consulta únicamente los ASIN cuyo autor está vacío o
-contiene texto promocional. Se detiene ante CAPTCHA o bloqueo.
+autor. Este segundo paso consulta los ASIN sin un autor verificado en Amazon.
+Se detiene ante CAPTCHA o bloqueo.
 """
 
 import argparse
@@ -11,10 +11,12 @@ import hashlib
 import json
 import os
 import random
+import re
 import shutil
 import time
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 
 from playwright.sync_api import TimeoutError as PWTimeout
 from playwright.sync_api import sync_playwright
@@ -117,6 +119,16 @@ def fetch_author(page, asin):
         product_url(asin), wait_until="domcontentloaded", timeout=45000
     )
     catalog.response_guard(response, page)
+    product = urlparse(page.url)
+    product_asin = re.search(
+        r"/(?:dp|gp/product|gp/aw/d)/([A-Z0-9]{10})(?:/|$)", product.path, re.IGNORECASE
+    )
+    if (
+        product.hostname != "www.amazon.com.mx"
+        or product_asin is None
+        or product_asin.group(1).upper() != asin.upper()
+    ):
+        return {"title": None, "author": None}
     try:
         page.locator(
             "#productTitle, #ebooksProductTitle, #bylineInfo"
@@ -148,7 +160,7 @@ def load_state(books, source_file, restart):
         known = set(state.get("pending_asins", []))
         additions = sorted(
             asin for asin, book in books.items()
-            if not catalog.valid_author(book.get("author")) and asin not in known
+            if not catalog.has_verified_author(book) and asin not in known
         )
         if additions:
             state["pending_asins"].extend(additions)
@@ -165,7 +177,7 @@ def load_state(books, source_file, restart):
     backup_dir = backup_source(source_file)
     pending = sorted(
         asin for asin, book in books.items()
-        if not catalog.valid_author(book.get("author"))
+        if not catalog.has_verified_author(book)
     )
     state = new_state(pending, backup_dir)
     catalog.save_json(STATE_FILE, state)
@@ -199,10 +211,10 @@ def run(args):
     books, source_file = catalog.load_books()
     missing = [
         asin for asin, book in books.items()
-        if not catalog.valid_author(book.get("author"))
+        if not catalog.has_verified_author(book)
     ]
     print(f"📚 Catálogo: {len(books):,} ASIN ({source_file.name})")
-    print(f"✍️ Sin autor válido: {len(missing):,}")
+    print(f"✍️ Sin autor verificado: {len(missing):,}")
 
     with sync_playwright() as playwright:
         context = playwright.chromium.launch_persistent_context(

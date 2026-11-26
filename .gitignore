@@ -28,3 +28,7 @@ __pycache__/
 *.key
 *.p12
 *.pfx
+
+#otros
+sftp.json
+settings.json

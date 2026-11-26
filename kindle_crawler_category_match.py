@@ -102,6 +102,13 @@ def valid_author(value):
     )
 
 
+def has_verified_author(book):
+    return (
+        book.get("author_source") in ("amazon_search_card", "amazon_product_page")
+        and valid_author(book.get("author"))
+    )
+
+
 def valid_asin(value):
     return bool(ASIN_RE.fullmatch(str(value or "").strip().upper()))
 
@@ -348,8 +355,9 @@ def merge_book(existing, incoming, category):
     set_if_missing("title", incoming.get("title"))
 
     candidate_author = incoming.get("author")
-    if valid_author(candidate_author) and not valid_author(book.get("author")):
+    if valid_author(candidate_author) and not has_verified_author(book):
         book["author"] = clean_text(candidate_author)
+        book["author_source"] = "amazon_search_card"
         changes.append("author")
 
     for key in (
@@ -404,6 +412,7 @@ def coverage(books):
     return {
         "total": len(rows),
         "with_valid_author": sum(valid_author(row.get("author")) for row in rows),
+        "with_verified_author": sum(has_verified_author(row) for row in rows),
         "with_image": sum(bool(clean_text(row.get("image_url"))) for row in rows),
         "kindle_plus_verified": sum(
             row.get("kindle_plus_eligible") is True
@@ -766,7 +775,7 @@ def crawl(args):
             print(f"ASIN antes: {initial_count:,}")
             print(f"ASIN ahora: {len(books):,}")
             print(f"ASIN nuevos: {report['new_asin_count']:,}")
-            print(f"Con autor válido: {report['coverage']['with_valid_author']:,}")
+            print(f"Con autor verificado: {report['coverage']['with_verified_author']:,}")
             print(f"Con imagen: {report['coverage']['with_image']:,}")
             print(f"Con categorías: {report['coverage']['with_categories']:,}")
             print(f"Reporte: {REPORT_FILE}")
